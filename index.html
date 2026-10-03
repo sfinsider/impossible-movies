@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Impossible Movies</title>
+<style>
+  :root {
+    --g50:#f9fafb; --g100:#f3f4f6; --g200:#e5e7eb; --g300:#d1d5db; --g400:#9ca3af; --g500:#6b7280; --g600:#4b5563; --g700:#374151; --g900:#111827;
+    --b300:#93c5fd; --b400:#60a5fa; --b600:#2563eb; --b700:#1d4ed8; --b50:#eff6ff;
+    --ease: cubic-bezier(.2,.8,.2,1);
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color:var(--g900); -webkit-font-smoothing:antialiased; }
+  button { font:inherit; border:0; background:none; cursor:pointer; color:inherit; text-align:inherit; }
+  svg.i { display:block; flex:none; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+
+  #app { min-height:100vh; background:linear-gradient(to bottom right, var(--bg1), var(--bg2), var(--bg3)); transition: --x 1s; }
+  #app { --bg1:#fff; --bg2:var(--g50); --bg3:var(--g100); }
+  .layout { display:flex; flex-direction:column; min-height:100vh; padding:16px; }
+  .col { width:100%; padding:24px; }
+  .col.mid { padding:32px; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .stack > * + * { margin-top:32px; }
+
+  .head { display:flex; align-items:center; justify-content:space-between; margin-bottom:40px; }
+  .head .l { display:flex; align-items:center; gap:16px; }
+  .head h2 { font-size:20px; font-weight:500; letter-spacing:-.025em; }
+  .snd { padding:8px; border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.05); transition:background .3s; }
+  .snd:hover { background:var(--g50); }
+
+  .glist { max-height:30vh; overflow-y:auto; padding-right:8px; }
+  .ggrid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .gbtn { position:relative; width:100%; padding:16px 20px; border-radius:12px; background:#fff; color:var(--g700); box-shadow:0 1px 2px rgba(0,0,0,.03); transition:all .5s var(--ease); }
+  .gbtn .in { display:flex; align-items:center; justify-content:center; gap:12px; }
+  .gbtn .ic { color:var(--g500); transition:all .5s; }
+  .gbtn span { font-size:14px; font-weight:500; }
+  .gbtn:hover { background:var(--hbg); color:var(--htx); box-shadow:0 1px 3px rgba(0,0,0,.05); }
+  .gbtn:hover .ic { color:inherit; }
+  .gbtn.sel { background:var(--sel); color:#fff; transform:scale(1.02); box-shadow:0 2px 8px rgba(0,122,255,.15); }
+  .gbtn.sel .ic { color:#fff; }
+  .gbtn .pin { position:absolute; right:-8px; top:50%; transform:translateY(-50%); width:16px; height:16px; background:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 1px 2px rgba(0,0,0,.05); color:var(--sel); }
+  .gbtn .pin i { width:8px; height:8px; background:currentColor; border-radius:50%; }
+
+  h3.sec { font-size:18px; font-weight:500; letter-spacing:-.025em; margin-bottom:16px; }
+  .lenbox { background:#fff; border-radius:12px; padding:8px; box-shadow:0 1px 2px rgba(0,0,0,.03); }
+  .lengrid { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+  .lbtn { padding:8px 12px; border-radius:8px; font-size:12px; font-weight:500; color:var(--g600); text-align:center; transition:all .3s; }
+  .lbtn:hover { background:var(--g50); color:var(--b600); }
+  .lbtn.sel { background:var(--b600); color:#fff; box-shadow:0 1px 3px rgba(0,122,255,.3); }
+  .lbtn b { display:block; font-weight:600; }
+  .lbtn small { display:block; font-size:12px; opacity:.75; }
+
+  .elist > * + * { margin-top:8px; }
+  .ebtn { width:100%; padding:12px 16px; border-radius:12px; background:#fff; color:var(--etx); box-shadow:0 1px 2px rgba(0,0,0,.03); display:flex; align-items:center; gap:12px; transition:all .3s; }
+  .ebtn:hover { background:var(--ebg); }
+  .ebtn .t { flex:1; }
+  .ebtn .n { font-size:14px; font-weight:500; color:var(--g900); }
+  .ebtn .y { font-size:12px; opacity:.75; color:var(--g500); }
+  .ebtn.sel { background:linear-gradient(to right, var(--e1), var(--e2)); color:#fff; box-shadow:0 2px 8px rgba(0,0,0,.1); }
+  .ebtn.sel .n, .ebtn.sel .y { color:#fff; }
+  .ebtn .dot { width:8px; height:8px; background:#fff; border-radius:50%; }
+
+  .statsbtn { display:flex; align-items:center; gap:12px; color:var(--g600); margin:32px 0 16px; transition:color .3s; }
+  .statsbtn:hover { color:var(--b600); }
+  .statsbtn span { font-size:14px; font-weight:500; }
+  .statsbox { background:#fff; border-radius:12px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+  .statsbox > * + * { margin-top:16px; }
+  .srow { display:flex; justify-content:space-between; align-items:center; font-size:14px; }
+  .srow span:first-child { color:var(--g600); } .srow span:last-child { font-weight:500; }
+  .bar { width:100%; height:8px; background:var(--g200); border-radius:99px; }
+  .bar i { display:block; height:8px; border-radius:99px; background:var(--b600); transition:all .5s; }
+  .bar i.low { background:#f97316; }
+  .smini { font-size:12px; color:var(--g500); text-align:center; }
+  .warn { font-size:12px; color:#ea580c; text-align:center; font-weight:500; }
+  .reset { width:100%; display:flex; align-items:center; justify-content:center; gap:8px; padding:12px 16px; background:var(--g100); color:var(--g700); border-radius:12px; transition:background .3s; }
+  .reset:hover { background:var(--g200); } .reset span { font-size:14px; font-weight:500; }
+
+  .titleblock { text-align:center; margin-bottom:56px; }
+  .titleblock h1 { font-size:48px; font-weight:600; letter-spacing:-.025em; margin-bottom:24px; }
+  .titleblock h2 { font-size:24px; font-weight:500; color:var(--g600); letter-spacing:.025em; }
+  .dots { display:flex; justify-content:center; gap:12px; margin-top:40px; }
+  .dots i { width:8px; height:8px; border-radius:50%; background:var(--d); }
+  .dots i:nth-child(2) { opacity:.7; } .dots i:nth-child(3) { opacity:.4; }
+
+  .cardwrap { margin-bottom:56px; }
+  .card { width:256px; height:384px; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,.04); transition:all .5s var(--ease); }
+  .card:hover { transform:scale(1.02); }
+  .card .in { height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px; text-align:center; }
+  .card .big { width:64px; height:64px; margin-bottom:32px; color:var(--g200); }
+  .card .big.g { color:var(--g300); margin:0 auto 24px; }
+  .card .lead { color:var(--g600); font-size:18px; font-weight:500; margin-bottom:12px; }
+  .card .lead.b { color:var(--b600); margin-bottom:8px; }
+  .card .sub { color:var(--g500); font-size:14px; } .card .sub.m { margin-bottom:8px; }
+  .card .hint { color:var(--g400); font-size:12px; }
+  .spin { width:64px; height:64px; border:4px solid var(--g200); border-top-color:var(--b600); border-radius:50%; animation:spin 1s linear infinite; margin-bottom:32px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  .go { padding:16px 40px; font-size:18px; font-weight:500; border-radius:12px; background:var(--g200); color:var(--g400); cursor:not-allowed; transition:all .5s var(--ease); }
+  .go span { display:flex; align-items:center; gap:16px; }
+  .go.on { background:var(--b600); color:#fff; cursor:pointer; box-shadow:0 2px 8px rgba(0,122,255,.15); }
+  .go.on:hover { background:var(--b700); } .go.on:active { transform:scale(.98); }
+
+  .rpanel { height:100%; min-height:300px; background:#fff; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,.04); padding:32px; display:flex; flex-direction:column; }
+  .empty { height:100%; flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+  .empty .i { width:48px; height:48px; color:var(--g200); margin-bottom:20px; }
+  .empty p { color:var(--g500); font-size:14px; }
+  .res { animation:fade .8s var(--ease); }
+  @keyframes fade { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
+  .res .top { text-align:center; border-bottom:1px solid var(--g100); padding-bottom:32px; margin-bottom:32px; }
+  .res .top h3 { color:var(--b600); font-size:18px; font-weight:500; margin-bottom:16px; }
+  .res .top .ico { display:flex; justify-content:center; }
+  .res h4 { font-size:20px; font-weight:600; line-height:1.25; }
+  .res .body > * + * { margin-top:24px; }
+  .res .meta { display:flex; gap:20px; font-size:14px; color:var(--g600); }
+  .res .tags { display:flex; gap:8px; }
+  .res .tags span { font-size:12px; font-weight:500; padding:8px 12px; border-radius:8px; background:var(--b50); color:var(--b600); }
+  .res .tags span + span { background:#faf5ff; color:#9333ea; }
+  .res .syn { color:var(--g700); font-size:14px; line-height:1.625; }
+  .res .note { margin-top:32px; padding:20px; border-radius:12px; background:var(--b50); }
+  .res .note p { font-size:12px; text-align:center; font-weight:500; color:#1d4ed8; }
+  .res .note.warn2 { background:#fff7ed; } .res .note.warn2 p { color:#c2410c; }
+
+  @media (min-width:1024px) {
+    .layout { flex-direction:row; padding:32px; }
+    .col { padding:40px; width:25%; }
+    .col.mid { width:50%; padding:56px; }
+    .head { margin-bottom:56px; }
+    .head h2 { font-size:24px; }
+    .stack > * + * { margin-top:40px; }
+    .glist { max-height:35vh; }
+    .ggrid { grid-template-columns:1fr; gap:20px; }
+    .gbtn { padding:20px 24px; }
+    .gbtn .in { justify-content:flex-start; } .gbtn span { font-size:16px; }
+    .statsbtn { margin-top:48px; }
+    .titleblock { margin-bottom:80px; }
+    .titleblock h1 { font-size:72px; } .titleblock h2 { font-size:30px; }
+    .cardwrap { margin-bottom:64px; }
+    .card { width:320px; height:480px; }
+    .card .big { width:80px; height:80px; } .spin { width:80px; height:80px; }
+    .go { padding:20px 56px; font-size:20px; }
+    .res h4 { font-size:24px; }
+    .rpanel { padding:40px; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ---------- Data (extracted from the original v0 build) ----------
+  const ICONS = {"sparkles":"<path d=\"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z\"/><path d=\"M20 3v4\"/><path d=\"M22 5h-4\"/><path d=\"M4 17v2\"/><path d=\"M5 18H3\"/>","star":"<path d=\"M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z\"/>","film":"<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\"/><path d=\"M7 3v18\"/><path d=\"M3 7.5h4\"/><path d=\"M3 12h18\"/><path d=\"M3 16.5h4\"/><path d=\"M17 3v18\"/><path d=\"M17 7.5h4\"/><path d=\"M17 16.5h4\"/>","clapper":"<path d=\"M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3Z\"/><path d=\"m6.2 5.3 3.1 3.9\"/><path d=\"m12.4 3.4 3.1 4\"/><path d=\"M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z\"/>","skull":"<path d=\"m12.5 17-.5-1-.5 1h1z\"/><path d=\"M15 22a1 1 0 0 0 1-1v-1a2 2 0 0 0 1.56-3.25 8 8 0 1 0-11.12 0A2 2 0 0 0 8 20v1a1 1 0 0 0 1 1z\"/><circle cx=\"15\" cy=\"12\" r=\"1\"/><circle cx=\"9\" cy=\"12\" r=\"1\"/>","heart":"<path d=\"M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z\"/>","doc":"<path d=\"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z\"/><path d=\"M14 2v4a2 2 0 0 0 2 2h4\"/><path d=\"M10 9H8\"/><path d=\"M16 13H8\"/><path d=\"M16 17H8\"/>","mountain":"<path d=\"m8 3 4 8 5-5 5 15H2L8 3z\"/>","eye":"<path d=\"M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>","radio":"<path d=\"M4.9 19.1C1 15.2 1 8.8 4.9 4.9\"/><path d=\"M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/><path d=\"M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5\"/><path d=\"M19.1 4.9C23 8.8 23 15.1 19.1 19\"/>","disc":"<circle cx=\"12\" cy=\"12\" r=\"10\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/>","phone":"<rect width=\"14\" height=\"20\" x=\"5\" y=\"2\" rx=\"2\" ry=\"2\"/><path d=\"M12 18h.01\"/>","bot":"<path d=\"M12 8V4H8\"/><rect width=\"16\" height=\"12\" x=\"4\" y=\"8\" rx=\"2\"/><path d=\"M2 14h2\"/><path d=\"M20 14h2\"/><path d=\"M15 13v2\"/><path d=\"M9 13v2\"/>","theater":"<path d=\"M2 10s3-3 3-8\"/><path d=\"M22 10s-3-3-3-8\"/><path d=\"M10 2c0 4.4-3.6 8-8 8\"/><path d=\"M14 2c0 4.4 3.6 8 8 8\"/><path d=\"M2 10s2 2 2 5\"/><path d=\"M22 10s-2 2-2 5\"/><path d=\"M8 15h8\"/><path d=\"M2 22v-1a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1\"/><path d=\"M14 22v-1a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1\"/>","volOn":"<path d=\"M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z\"/><path d=\"M16 9a5 5 0 0 1 0 6\"/><path d=\"M19.364 18.364a9 9 0 0 0 0-12.728\"/>","volOff":"<path d=\"M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z\"/><line x1=\"22\" x2=\"16\" y1=\"9\" y2=\"15\"/><line x1=\"16\" x2=\"22\" y1=\"9\" y2=\"15\"/>","chart":"<path d=\"M3 3v16a2 2 0 0 0 2 2h16\"/><path d=\"M18 17V9\"/><path d=\"M13 17V5\"/><path d=\"M8 17v-3\"/>","reset":"<path d=\"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8\"/><path d=\"M3 3v5h5\"/>"};
+  const ERAS_DATA = {"80s Era":{"titleWords":["Neon","Cyber","Electric","Miami","Blade","Chrome","Synth","Arcade","Laser","Digital"],"actors":["Jack (Tom Cruise)","Sarah (Michelle Pfeiffer)","Rex (Arnold Schwarzenegger)","Diana (Sigourney Weaver)","Max (Michael J. Fox)"],"locations":["neon-soaked Miami","chrome-plated Los Angeles","digital underground","cyber-enhanced Tokyo"],"themes":["tech-paranoia","corporate conspiracy","artificial intelligence uprising","virtual reality escape"],"templateStart":"In the neon-lit streets of","templateMiddle":"must navigate a world where","templateEnd":"before technology destroys everything they hold dear"},"90s Era":{"titleWords":["Alternative","Underground","Reality","Grunge","Edge","Raw","Independent","Rebel","Chaos","Generation"],"actors":["Neo (Keanu Reeves)","Max (Winona Ryder)","Tyler (Brad Pitt)","River (River Phoenix)","Kate (Drew Barrymore)"],"locations":["underground Seattle","alternative New York","indie film scene","grunge music venues"],"themes":["corporate rebellion","anti-establishment","youth culture","independent spirit"],"templateStart":"In the underground world of","templateMiddle":"fights against the system that","templateEnd":"while discovering their true rebellious nature"},"2000s Era":{"titleWords":["Digital","Connection","Y2K","Online","Matrix","Code","Virtual","Dot-Com","Millennium","Web"],"actors":["David (Tobey Maguire)","Luna (Kirsten Dunst)","Alex (Heath Ledger)","Maya (Natalie Portman)","Jake (Jake Gyllenhaal)"],"locations":["early internet cafes","dot-com startups","digital divide","Y2K-paranoid world"],"themes":["digital revolution","online identity","technological anxiety","millennium fears"],"templateStart":"In the dawn of the digital age","templateMiddle":"discovers that the internet","templateEnd":"changing the way humanity connects forever"},"Modern":{"titleWords":["Viral","Stream","Cloud","Social","App","Network","Trending","Influence","Platform","Content"],"actors":["Emma (Emma Stone)","Noah (Ryan Gosling)","Zoe (Zendaya)","Miles (Michael Cera)","Aria (Anya Taylor-Joy)"],"locations":["social media headquarters","streaming platforms","influencer houses","viral content studios"],"themes":["social media impact","digital fame","online relationships","streaming culture"],"templateStart":"In the age of viral content","templateMiddle":"navigates a world where","templateEnd":"while questioning what's real in the digital age"},"Future":{"titleWords":["Neural","Colony","Quantum","Bio","Terraform","Synthetic","Orbital","Galactic","Nano","Consciousness"],"actors":["AI-7 (voiced by Scarlett Johansson)","Captain Torres (Oscar Isaac)","Dr. Chen (Sandra Oh)","Commander Nova (Lupita Nyong'o)","Zara-9 (Zendaya)"],"locations":["Mars colonies","orbital stations","neural networks","quantum dimensions"],"themes":["consciousness transfer","space colonization","AI rights","environmental restoration"],"templateStart":"On the terraformed surface of","templateMiddle":"discovers technology that could","templateEnd":"determining the future of human consciousness"}};
+  const GENRES_DATA = {"Comedy":{"adjectives":["Backwards","Invisible","Upside-Down","Floating","Shrinking","Gigantic","Magnetic","Elastic","Transparent","Bouncing"],"nouns":["Office","Wedding","Vacation","Meeting","Party","Restaurant","School","Hospital","Bank","Library"],"concepts":["Day","Night","Machine","Algorithm","Experiment","Invention","Mishap","Adventure","Journey","Discovery"],"characters":["Charlie (Jim Carrey)","Lucy (Amy Poehler)","Max (Steve Carell)","Nina (Tina Fey)","Ben (Will Ferrell)"],"plotElements":["accidentally becomes","discovers they can","wakes up to find","inherits a magical","gets stuck in a","must navigate","tries to hide","attempts to fix","learns to control","races against time to"],"situations":["everything happens in reverse","gravity works sideways","everyone speaks in rhymes","time moves backwards","colors have switched places","sounds become visible","thoughts appear as bubbles","emotions change weather","lies become truth","dreams leak into reality"],"endings":["while trying to return to normal","before the world notices","without anyone finding out","to save their reputation","and hilarity ensues","with unexpected consequences","leading to chaos and laughter","turning their world upside down","in the most ridiculous way possible","while learning about themselves"]},"Family":{"adjectives":["Magical","Enchanted","Mysterious","Wonderful","Secret","Lost","Hidden","Ancient","Glowing","Singing"],"nouns":["Castle","Forest","Garden","Library","Workshop","Lighthouse","Treehouse","Village","Mountain","Island"],"concepts":["Dream","Wish","Journey","Quest","Adventure","Discovery","Friendship","Magic","Wonder","Hope"],"characters":["Emma (Emma Watson)","Oliver (Tom Holland)","Luna (Zendaya)","Sam (Jacob Tremblay)","Grace (Lupita Nyong'o)"],"plotElements":["discovers a portal to","inherits a magical","finds a map leading to","befriends a creature from","must save","embarks on a quest to find","learns the secret of","protects the last","restores magic to","brings together"],"situations":["where colors are fading away","that only appears at sunset","hidden beneath their hometown","where animals can talk","that grants one wish per person","where seasons never change","that connects all dreams","where music has real power","that exists between raindrops","where kindness creates light"],"endings":["and learns the true meaning of family","while discovering their own courage","bringing joy back to the world","and finds magic in everyday moments","teaching everyone about friendship","and saves Christmas for everyone","while learning to believe in themselves","and discovers that love conquers all","bringing hope to their community","and realizes home is where the heart is"]},"Sci-Fi":{"adjectives":["Quantum","Digital","Neural","Cyber","Stellar","Temporal","Genetic","Synthetic","Virtual","Cosmic"],"nouns":["Memory","Reality","Consciousness","Algorithm","Signal","Code","Data","Network","System","Protocol"],"concepts":["Thieves","Hunters","Architects","Guardians","Rebels","Explorers","Engineers","Hackers","Pilots","Scientists"],"characters":["Dr. Nova (Lupita Nyong'o)","Commander Rex (Oscar Isaac)","Zara (Zendaya)","Professor Kane (Benedict Cumberbatch)","Captain Vega (Brie Larson)"],"plotElements":["discovers that reality is","receives signals from","must prevent","uncovers a conspiracy involving","becomes trapped in","fights to preserve","races to decode","attempts to contact","struggles to escape","works to restore"],"situations":["a simulated universe","parallel dimensions","the future timeline","artificial consciousness","deleted memories","quantum entanglement","time paradoxes","digital afterlife","alien communication","consciousness transfer"],"endings":["before humanity loses its identity","while questioning what makes us human","and discovers the nature of existence","to prevent the collapse of reality","while preserving human consciousness","and learns the price of progress","before artificial intelligence takes over","while fighting for free will","and uncovers the truth about reality","to save both human and artificial life"]},"Adventure":{"adjectives":["Lost","Forbidden","Ancient","Floating","Crystal","Golden","Storm","Fire","Ice","Shadow"],"nouns":["Temple","City","Treasure","Compass","Map","Key","Crown","Sword","Shield","Amulet"],"concepts":["Guardians","Seekers","Runners","Climbers","Riders","Hunters","Explorers","Warriors","Scouts","Navigators"],"characters":["Indiana (Harrison Ford)","Lara (Alicia Vikander)","Nathan (Tom Holland)","Elena (Gal Gadot)","Marcus (Dwayne Johnson)"],"plotElements":["must reach","searches for","races to find","protects","discovers the location of","follows ancient clues to","battles through dangers to reach","uncovers the mystery of","ventures into uncharted territory to find","leads an expedition to"],"situations":["before it disappears forever","hidden in a dangerous realm","guarded by ancient creatures","that appears only during eclipses","lost beneath the ocean","floating among the clouds","protected by elemental magic","scattered across different worlds","buried in shifting sands","concealed within a living mountain"],"endings":["and discovers the real treasure was friendship","while learning about ancient civilizations","and saves their homeland from destruction","but realizes some secrets should stay hidden","and becomes the guardian of ancient wisdom","while proving that courage comes from within","and restores balance to the natural world","but must choose between power and peace","and learns that the greatest adventures happen together","while uncovering their true destiny"]},"Horror":{"adjectives":["Cursed","Haunted","Dark","Twisted","Sinister","Demonic","Ghostly","Bloody","Terrifying","Nightmare"],"nouns":["House","Cemetery","Mansion","Forest","Asylum","Church","Basement","Attic","Mirror","Doll"],"concepts":["Shadows","Spirits","Demons","Vampires","Zombies","Witches","Monsters","Ghosts","Darkness","Evil"],"characters":["Vincent (Johnny Depp)","Sarah (Tilda Swinton)","Marcus (Oscar Isaac)","Elena (Lupita Nyong'o)","Dr. Kane (Benedict Cumberbatch)"],"plotElements":["awakens an ancient","is possessed by","discovers a portal to","unleashes a curse that","becomes trapped with","must survive against","is haunted by","uncovers the truth about","fights to escape from","confronts the evil"],"situations":["that feeds on fear","from beyond the grave","that cannot be killed","lurking in the shadows","that grows stronger each night","seeking revenge for past sins","that corrupts everything it touches","trapped between worlds","that preys on the innocent","awakened by forbidden rituals"],"endings":["but the evil still lingers","at the cost of their sanity","only to realize it was too late","but some doors should never be opened","while questioning what is real","and discovers the horror within themselves","but the nightmare has just begun","leaving scars that never heal","and learns that some things are better left buried","but evil never truly dies"]},"Romance":{"adjectives":["Passionate","Eternal","Forbidden","Sweet","Destined","Heartfelt","Tender","Enchanted","Perfect","Timeless"],"nouns":["Love","Heart","Kiss","Wedding","Promise","Letter","Dance","Garden","Sunset","Dream"],"concepts":["Soulmates","Destiny","Happiness","Forever","Passion","Romance","Devotion","Commitment","Affection","Bliss"],"characters":["Emma (Emma Stone)","Ryan (Ryan Gosling)","Sophie (Scarlett Johansson)","James (Michael B. Jordan)","Isabella (Zendaya)"],"plotElements":["falls in love with","reunites with their","discovers their true","fights for their","chooses between duty and","sacrifices everything for","finds their way back to","realizes they cannot live without","overcomes all obstacles for","proves their love by"],"situations":["despite impossible odds","across time and space","in the most unexpected place","while facing family opposition","during a magical summer","through letters never sent","in a city of dreams","under the northern lights","during a chance encounter","while chasing their dreams"],"endings":["and they live happily ever after","proving that love conquers all","and find their perfect ending","creating a love story for the ages","and discover that home is where the heart is","showing that true love never dies","and build a beautiful life together","proving that some things are worth waiting for","and create their own fairy tale","finding that love is the greatest adventure"]},"Documentary":{"adjectives":["Hidden","Scientific","Historical","Groundbreaking","Investigative","Revolutionary","Controversial","Revealing","Authentic","Compelling"],"nouns":["Truth","Evidence","Research","Discovery","Investigation","History","Science","Nature","Society","Reality"],"concepts":["Researchers","Scientists","Historians","Journalists","Explorers","Activists","Experts","Witnesses","Scholars","Investigators"],"characters":["Dr. Mitchell (Morgan Freeman)","Professor Chen (Sandra Oh)","Dr. Williams (David Attenborough)","Researcher Adams (Jane Goodall)","Journalist Parker (Anderson Cooper)"],"plotElements":["uncovers the truth about","investigates the mystery of","documents the journey of","reveals the hidden story of","explores the impact of","follows the discovery of","examines the evidence behind","traces the history of","exposes the reality of","chronicles the evolution of"],"situations":["that changed everything we know","hidden from the public for decades","that challenges conventional wisdom","affecting millions of lives","that could reshape our future","buried in classified documents","that connects seemingly unrelated events","threatening our planet's survival","that reveals human nature","transforming our understanding"],"endings":["and changes how we see the world","leaving more questions than answers","and calls for immediate action","revealing the power of human resilience","and shows the importance of truth","demonstrating the need for change","and inspires a new generation","proving that knowledge is power","and highlights our shared humanity","showing that every voice matters"]},"Western":{"adjectives":["Wild","Lawless","Dusty","Rugged","Frontier","Outlaw","Desert","Golden","Legendary","Untamed"],"nouns":["Sheriff","Cowboy","Saloon","Ranch","Gold","Canyon","Town","Train","Horse","Gun"],"concepts":["Outlaws","Gunslingers","Pioneers","Settlers","Bandits","Rangers","Prospectors","Marshals","Drifters","Bounty Hunters"],"characters":["Jake (Matthew McConaughey)","Belle (Margot Robbie)","Marshal (Josh Brolin)","Doc (Sam Elliott)","Annie (Hailee Steinfeld)"],"plotElements":["rides into town to","seeks revenge against","protects the innocent from","searches for legendary","faces off against","leads a group to","discovers a conspiracy involving","fights to save","pursues the notorious","stands alone against"],"situations":["in the lawless frontier","during the gold rush","as the railroad arrives","in a town without law","across the dangerous desert","while being hunted","in the shadow of the mountains","during a bitter range war","as civilization encroaches","in the dying days of the Old West"],"endings":["and rides off into the sunset","bringing justice to the frontier","and establishes law and order","proving that honor still matters","and finds redemption in the wilderness","showing that courage defines a person","and helps build a better tomorrow","learning that some fights are worth having","and discovers what it means to be free","leaving a legend that will never die"]},"Thriller":{"adjectives":["Dangerous","Mysterious","Deadly","Hidden","Secret","Shadowy","Suspicious","Tense","Paranoid","Explosive"],"nouns":["Conspiracy","Evidence","Chase","Betrayal","Secret","Surveillance","Escape","Identity","Mission","Target"],"concepts":["Agents","Spies","Detectives","Assassins","Criminals","Hackers","Witnesses","Fugitives","Operatives","Informants"],"characters":["Agent Cole (Idris Elba)","Detective Ray (Jake Gyllenhaal)","Sarah (Emily Blunt)","Marcus (Oscar Isaac)","Dr. Kane (Tilda Swinton)"],"plotElements":["uncovers a conspiracy involving","is framed for","must protect a witness from","discovers their identity is","races against time to prevent","is betrayed by","must escape from","investigates the murder of","infiltrates an organization to","pursues a dangerous"],"situations":["that goes to the highest levels","with deadly consequences","while being hunted","that threatens national security","before time runs out","in a web of lies and deception","where nothing is as it seems","with no one to trust","that could expose everything","in a game of cat and mouse"],"endings":["but the truth comes at a price","and discovers the conspiracy runs deeper","while questioning who they can trust","and realizes they were a pawn all along","but some secrets are worth dying for","and learns that justice has many faces","while staying one step ahead of danger","and finds that the truth is more dangerous than lies","but victory comes with unexpected consequences","and discovers that some games never end"]}};
+
+  const GENRES = [
+    { name:'Comedy',      icon:'sparkles',  hbg:'#fefce8', htx:'#a16207', sel:'#ca8a04', freq:'C6' },
+    { name:'Family',      icon:'star',      hbg:'#eff6ff', htx:'#1d4ed8', sel:'#2563eb', freq:'D6' },
+    { name:'Sci-Fi',      icon:'film',      hbg:'#ecfeff', htx:'#0e7490', sel:'#0891b2', freq:'E6' },
+    { name:'Adventure',   icon:'clapper',   hbg:'#f0fdf4', htx:'#15803d', sel:'#16a34a', freq:'F6' },
+    { name:'Horror',      icon:'skull',     hbg:'#fef2f2', htx:'#b91c1c', sel:'#dc2626', freq:'G3' },
+    { name:'Romance',     icon:'heart',     hbg:'#fdf2f8', htx:'#be185d', sel:'#db2777', freq:'A6' },
+    { name:'Documentary', icon:'doc',       hbg:'#f9fafb', htx:'#374151', sel:'#4b5563', freq:'B5' },
+    { name:'Western',     icon:'mountain',  hbg:'#fffbeb', htx:'#b45309', sel:'#d97706', freq:'D5' },
+    { name:'Thriller',    icon:'eye',       hbg:'#eef2ff', htx:'#4338ca', sel:'#4f46e5', freq:'F5' }
+  ];
+  const LENGTHS = [
+    { name:'Short Film',   duration:'5-15 min',   min:5,  max:15 },
+    { name:'Feature Film', duration:'90-150 min', min:90, max:150 },
+    { name:'Series Pilot', duration:'45-60 min',  min:45, max:60 },
+    { name:'Documentary',  duration:'60-90 min',  min:60, max:90 }
+  ];
+  const ERAS = [
+    { name:'80s Era',   icon:'radio',  tx:'#db2777', bg:'#fdf2f8', e1:'#ec4899', e2:'#06b6d4', freq:'C#5', years:'1980-1989', page:['#fdf2f8','#faf5ff','#ecfeff'] },
+    { name:'90s Era',   icon:'disc',   tx:'#b45309', bg:'#fffbeb', e1:'#d97706', e2:'#dc2626', freq:'D#5', years:'1990-1999', page:['#fffbeb','#fff7ed','#fef2f2'] },
+    { name:'2000s Era', icon:'disc',   tx:'#2563eb', bg:'#eff6ff', e1:'#3b82f6', e2:'#a855f7', freq:'F#5', years:'2000-2009', page:['#eff6ff','#eef2ff','#faf5ff'] },
+    { name:'Modern',    icon:'phone',  tx:'#374151', bg:'#f9fafb', e1:'#4b5563', e2:'#1f2937', freq:'A5',  years:'2010-2020', page:['#f9fafb','#f8fafc','#f3f4f6'] },
+    { name:'Future',    icon:'bot',    tx:'#059669', bg:'#ecfdf5', e1:'#10b981', e2:'#06b6d4', freq:'B5',  years:'2030+',     page:['#ecfdf5','#f0fdfa','#ecfeff'] }
+  ];
+
+  const svg = (name, size, cls) => '<svg class="i ' + (cls || '') + '" xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + size + '" viewBox="0 0 24 24">' + ICONS[name] + '</svg>';
+
+  // ---------- Dictionary of used words (kept per browser session) ----------
+  let used = new Set();
+  const norm = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+  try { const raw = sessionStorage.getItem('impossibleMoviesUsedWords'); if (raw) used = new Set(JSON.parse(raw)); } catch (e) {}
+  const saveUsed = () => { try { sessionStorage.setItem('impossibleMoviesUsedWords', JSON.stringify([...used])); } catch (e) {} };
+  const resetUsed = () => { used.clear(); try { sessionStorage.removeItem('impossibleMoviesUsedWords'); } catch (e) {} };
+  const fresh = arr => arr.filter(w => !used.has(norm(w)));
+  const mark = w => { used.add(norm(w)); saveUsed(); };
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  const totalWords = () => {
+    let n = 0;
+    Object.values(GENRES_DATA).forEach(g => ['adjectives','nouns','concepts','characters','plotElements','situations','endings'].forEach(k => n += g[k].length));
+    Object.values(ERAS_DATA).forEach(e => ['titleWords','actors','locations','themes'].forEach(k => n += e[k].length));
+    return n;
+  };
+
+  // ---------- Generator ----------
+  function makeTitle(lengthName, era, adj, noun, concept) {
+    const e = ERAS_DATA[era];
+    if (!e) return 'The ' + adj + ' ' + concept;
+    const w = pick(e.titleWords); mark(w);
+    switch (lengthName) {
+      case 'Short Film':   return pick([w, w + ' ' + concept, adj + ' ' + w]);
+      case 'Feature Film': return pick([w + ' ' + concept, 'The ' + w + ' ' + noun, adj + ' ' + w, w + ': The ' + concept]);
+      case 'Series Pilot': return w + ': Origins';
+      case 'Documentary':  return 'The ' + w + ' Generation: A Documentary';
+      default:             return w + ' ' + concept;
+    }
+  }
+  function makeSynopsis(lengthName, era, character, plot, situation, ending, adj, concept) {
+    const e = ERAS_DATA[era];
+    if (!e) return character + ' ' + plot + ' ' + situation + ' ' + ending + '.';
+    const actor = pick(e.actors), place = pick(e.locations), theme = pick(e.themes);
+    mark(actor); mark(place); mark(theme);
+    const a = adj.toLowerCase(), c = concept.toLowerCase();
+    switch (lengthName) {
+      case 'Short Film':
+        return e.templateStart + ' ' + place + ', ' + actor + ' ' + plot + ' ' + situation + '. ' + ending + '. A ' + a + ' tale of ' + theme + '.';
+      case 'Feature Film':
+        return e.templateStart + ' ' + place + ', ' + actor + ' lives a seemingly ordinary life until they ' + plot + ' ' + situation + '. As complications unfold around ' + theme + ', they ' + e.templateMiddle + ' ' + ending + '. This ' + a + ' story explores the intersection of ' + c + ' and ' + theme + ', ' + e.templateEnd + '.';
+      case 'Series Pilot':
+        return 'In the series premiere set in ' + place + ', ' + actor + ' ' + plot + ' ' + situation + '. As they navigate this world of ' + theme + ', ' + ending + '. But this is only the beginning - the true nature of ' + c + ' in this era will be revealed as the series unfolds. What secrets lie beneath the surface of ' + theme + '?';
+      case 'Documentary':
+        return 'This groundbreaking documentary explores ' + theme + ' through the lens of ' + place + '. Following ' + actor + ' as they ' + plot + ' ' + situation + ', the film ' + ending + '. Through archival footage and expert interviews, this investigation reveals how ' + c + ' shaped an entire generation.';
+      default:
+        return e.templateStart + ' ' + place + ', ' + actor + ' ' + plot + ' ' + situation + ' ' + ending + '.';
+    }
+  }
+  const yearFor = era => {
+    switch (era) {
+      case '80s Era': return 1980 + Math.floor(Math.random() * 10);
+      case '90s Era': return 1990 + Math.floor(Math.random() * 10);
+      case '2000s Era': return 2000 + Math.floor(Math.random() * 10);
+      case 'Modern': return 2010 + Math.floor(Math.random() * 11);
+      case 'Future': return 2030 + Math.floor(Math.random() * 20);
+      default: return 2023;
+    }
+  };
+  function generate(genre, lengthName, era) {
+    const g = GENRES_DATA[genre]; if (!g) return null;
+    const A = fresh(g.adjectives), N = fresh(g.nouns), C = fresh(g.concepts), H = fresh(g.characters), P = fresh(g.plotElements), S = fresh(g.situations), E = fresh(g.endings);
+    if ([A, N, C, H, P, S, E].some(x => x.length === 0)) return null;
+    const adj = pick(A), noun = pick(N), concept = pick(C), character = pick(H), plot = pick(P), situation = pick(S), ending = pick(E);
+    [adj, noun, concept, character, plot, situation, ending].forEach(mark);
+    const title = makeTitle(lengthName, era, adj, noun, concept);
+    const synopsis = makeSynopsis(lengthName, era, character, plot, situation, ending, adj, concept);
+    const L = LENGTHS.find(l => l.name === lengthName);
+    const runtime = L ? L.min + Math.floor(Math.random() * (L.max - L.min + 1)) : 90;
+    return { title, synopsis, year: yearFor(era), runtime, filmLength: lengthName, era, isUnique: true };
+  }
+
+  // ---------- Sound (Web Audio, no external files) ----------
+  const NOTE = { C:0, 'C#':1, D:2, 'D#':3, E:4, F:5, 'F#':6, G:7, 'G#':8, A:9, 'A#':10, B:11 };
+  const hz = n => { const m = /^([A-G]#?)(\d)$/.exec(n); return 440 * Math.pow(2, (NOTE[m[1]] + 12 * (+m[2] + 1) - 69) / 12); };
+  let actx = null, soundOn = true;
+  try { const v = localStorage.getItem('impossibleMoviesSoundEnabled'); if (v !== null) soundOn = v === 'true'; } catch (e) {}
+  const ctx = () => {
+    if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } }
+    if (actx.state === 'suspended') actx.resume();
+    return actx;
+  };
+  function tone(note, dur, release) {
+    if (!soundOn) return;
+    const a = ctx(); if (!a) return;
+    const t = a.currentTime, o = a.createOscillator(), g = a.createGain(), pk = 0.1;  // about -20 dB
+    o.type = 'triangle'; o.frequency.value = hz(note);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(pk, t + .01);
+    g.gain.linearRampToValueAtTime(pk * .3, t + .11);
+    g.gain.setValueAtTime(pk * .3, t + Math.max(dur, .12));
+    g.gain.linearRampToValueAtTime(0.0001, t + Math.max(dur, .12) + (release || .1));
+    o.connect(g); g.connect(a.destination);
+    o.start(t); o.stop(t + Math.max(dur, .12) + (release || .1) + .02);
+  }
+  const snd = {
+    genre: f => tone(f, .0625),
+    era:   f => tone(f, .125),
+    length: () => tone('E5', .125),
+    click:  () => tone('D5', .125),
+    generate: () => { tone('G4', .25); setTimeout(() => tone('C5', .5), 100); },
+    whoosh: () => tone('F3', .25, .4)
+  };
+
+  // ---------- State ----------
+  const st = { hover:null, genre:null, length:'Feature Film', era:'Modern', result:null, busy:false, stats:false };
+  const app = document.getElementById('app');
+
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+  const eraObj = () => ERAS.find(e => e.name === st.era);
+  const genreObj = () => GENRES.find(g => g.name === st.genre);
+
+  function render() {
+    const era = eraObj(), gen = genreObj();
+    const tot = totalWords(), pct = tot ? Math.round(used.size / tot * 100) : 0, low = tot - used.size < 20;
+    const bg = era ? era.page : ['#fff', '#f9fafb', '#f3f4f6'];
+    const dots = era ? 'linear-gradient(to right,' + era.e1 + ',' + era.e2 + ')' : null;
+
+    const genreBtns = GENRES.map(g => '<button class="gbtn' + (st.genre === g.name ? ' sel' : '') + '" data-genre="' + g.name + '" style="--hbg:' + g.hbg + ';--htx:' + g.htx + ';--sel:' + g.sel + '">'
+      + '<div class="in"><div class="ic">' + svg(g.icon, 20) + '</div><span>' + g.name + '</span></div>'
+      + (st.genre === g.name ? '<div class="pin"><i></i></div>' : '') + '</button>').join('');
+
+    const lenBtns = LENGTHS.map(l => '<button class="lbtn' + (st.length === l.name ? ' sel' : '') + '" data-length="' + l.name + '"><b>' + l.name + '</b><small>' + l.duration + '</small></button>').join('');
+
+    const eraBtns = ERAS.map(e => '<button class="ebtn' + (st.era === e.name ? ' sel' : '') + '" data-era="' + e.name + '" style="--etx:' + e.tx + ';--ebg:' + e.bg + ';--e1:' + e.e1 + ';--e2:' + e.e2 + '">'
+      + svg(e.icon, 16) + '<div class="t"><div class="n">' + e.name + '</div><div class="y">' + e.years + '</div></div>' + (st.era === e.name ? '<div class="dot"></div>' : '') + '</button>').join('');
+
+    const statsHtml = '<button class="statsbtn" data-act="stats">' + svg('chart', 20) + '<span>Dictionary Stats</span></button>'
+      + (st.stats ? '<div class="statsbox"><div class="srow"><span>Words Used</span><span>' + used.size + '/' + tot + '</span></div>'
+        + '<div class="bar"><i class="' + (low ? 'low' : '') + '" style="width:' + pct + '%"></i></div>'
+        + '<div class="smini">' + pct + '% dictionary used</div>'
+        + (low ? '<div class="warn">⚠️ Running low on unique words</div>' : '')
+        + '<button class="reset" data-act="reset">' + svg('reset', 16) + '<span>Reset Dictionary</span></button></div>' : '');
+
+    let cardInner;
+    if (st.busy) cardInner = '<div><div class="spin"></div><p class="lead b" style="margin-bottom:12px">Generating...</p><p class="sub">Creating ' + esc(st.era) + ' ' + st.length.toLowerCase() + '</p></div>';
+    else if (gen) cardInner = '<div><div class="big g">' + svg(gen.icon, 80) + '</div><p class="lead b">' + esc(st.era) + ' ' + esc(st.genre) + '</p><p class="sub m">' + esc(st.length) + '</p><p class="hint">' + (st.result ? 'Tap Impossible again' : 'Ready to discover') + '</p></div>';
+    else cardInner = '<div class="big">' + svg('film', 80) + '</div><div><p class="lead">Coming Soon</p><p class="sub">Select a genre</p></div>';
+
+    const r = st.result;
+    const right = r
+      ? '<div class="res"><div class="top"><h3>' + (r.isUnique ? 'Unique Discovery' : 'Dictionary Status') + '</h3><div class="ico">' + (r.isUnique ? '<span style="color:#2563eb">' + svg('star', 24) + '</span>' : '<span style="color:#f97316">' + svg('reset', 24) + '</span>') + '</div></div>'
+        + '<div class="body"><h4>' + esc(r.title) + '</h4>'
+        + (r.isUnique ? '<div class="meta"><span>' + r.year + '</span><span>' + r.runtime + 'm</span></div><div class="tags"><span>' + esc(r.filmLength) + '</span><span>' + esc(r.era) + '</span></div>' : '')
+        + '<p class="syn">' + esc(r.synopsis) + '</p>'
+        + '<div class="note' + (r.isUnique ? '' : ' warn2') + '"><p>' + (r.isUnique ? '✨ This is a completely new word combination!' : '🔄 Please reset the dictionary to continue generating unique movies.') + '</p></div></div></div>'
+      : '<div class="empty">' + svg('sparkles', 48) + '<p>' + (st.genre ? 'Tap Impossible to discover a film' : 'Coming Soon...') + '</p></div>';
+
+    app.style.background = 'linear-gradient(to bottom right,' + bg.join(',') + ')';
+    app.innerHTML =
+      '<div class="layout">'
+      + '<div class="col"><div class="stack">'
+      +   '<div class="head"><div class="l"><span style="color:#2563eb">' + svg('theater', 28) + '</span><h2>Genres</h2></div>'
+      +   '<button class="snd" data-act="sound" aria-label="' + (soundOn ? 'Disable sound' : 'Enable sound') + '"><span style="color:' + (soundOn ? '#2563eb' : '#9ca3af') + '">' + svg(soundOn ? 'volOn' : 'volOff', 20) + '</span></button></div>'
+      +   '<div class="glist"><div class="ggrid">' + genreBtns + '</div></div>'
+      +   '<div><h3 class="sec">Film Length</h3><div class="lenbox"><div class="lengrid">' + lenBtns + '</div></div></div>'
+      +   '<div><h3 class="sec">Era</h3><div class="elist">' + eraBtns + '</div></div>'
+      +   '<div>' + statsHtml + '</div>'
+      + '</div></div>'
+      + '<div class="col mid">'
+      +   '<div class="titleblock"><h1>Impossible</h1><h2>Movies</h2><div class="dots" style="--d:' + (dots || '#2563eb') + '">' + (dots ? '<i></i><i></i><i></i>' : '<i style="background:#2563eb"></i><i style="background:#60a5fa;opacity:1"></i><i style="background:#93c5fd;opacity:1"></i>') + '</div></div>'
+      +   '<div class="cardwrap"><div class="card"><div class="in">' + cardInner + '</div></div></div>'
+      +   '<button class="go' + (gen && !st.busy ? ' on' : '') + '" data-act="go"' + (!gen || st.busy ? ' disabled' : '') + '><span>' + (st.busy ? svg('sparkles', 24) : svg('film', 24)) + (st.busy ? 'Generating...' : 'Impossible') + '</span></button>'
+      + '</div>'
+      + '<div class="col"><div class="rpanel">' + right + '</div></div>'
+      + '</div>';
+  }
+
+  // ---------- Events (delegated, so the sidebar can scroll without losing state) ----------
+  app.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const scroller = () => { const s = app.querySelector('.glist'); return s ? s.scrollTop : 0; };
+    const keep = scroller();
+    if (b.dataset.genre) { ctx(); snd.click(); st.genre = b.dataset.genre; st.result = null; }
+    else if (b.dataset.length) { ctx(); snd.length(); st.length = b.dataset.length; st.result = null; }
+    else if (b.dataset.era) { ctx(); const en = ERAS.find(x => x.name === b.dataset.era); snd.era(en.freq); st.era = b.dataset.era; st.result = null; }
+    else if (b.dataset.act === 'stats') { ctx(); snd.click(); st.stats = !st.stats; }
+    else if (b.dataset.act === 'reset') { ctx(); snd.whoosh(); resetUsed(); st.result = null; }
+    else if (b.dataset.act === 'sound') {
+      soundOn = !soundOn; try { localStorage.setItem('impossibleMoviesSoundEnabled', String(soundOn)); } catch (err) {}
+      if (soundOn) { ctx(); setTimeout(snd.click, 100); }
+    }
+    else if (b.dataset.act === 'go') {
+      if (!st.genre || st.busy) return;
+      ctx(); snd.generate(); st.busy = true;
+      setTimeout(() => {
+        const res = generate(st.genre, st.length, st.era);
+        st.result = res || { title:'Dictionary Exhausted', synopsis:'All unique word combinations for this genre have been used! Please reset the dictionary to continue.', year:new Date().getFullYear(), runtime:0, filmLength:st.length, era:st.era, isUnique:false };
+        st.busy = false; render();
+      }, 1500);
+    }
+    render();
+    const s = app.querySelector('.glist'); if (s) s.scrollTop = keep;
+  });
+  app.addEventListener('mouseover', e => {
+    const b = e.target.closest('.gbtn'); if (!b || b.contains(e.relatedTarget)) return;
+    const g = GENRES.find(x => x.name === b.dataset.genre); if (g) { ctx(); snd.genre(g.freq); }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
